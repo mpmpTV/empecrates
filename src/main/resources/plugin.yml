@@ -1,0 +1,11 @@
+name: EmpeCrates
+version: 1.7
+main: pl.empe.crates.CratesPlugin
+api-version: 1.8
+commands:
+  skrzynia:
+    description: Glowna komenda skrzynek
+    permission: crates.admin
+    permission-message: "&cBlad: Nie posiadasz uprawnien do crates.admin!"
+    aliases: [case, crate]
+    depend: [DecentHolograms]

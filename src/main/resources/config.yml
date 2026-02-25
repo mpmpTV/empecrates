@@ -1,0 +1,48 @@
+# ==========================================
+# EmpeCrates - Konfiguracja Skrzyń
+# ==========================================
+
+crates:
+  common:
+    display_name: "&7&lSKRZYNIA COMMON"
+    gui_title: "&8Losowanie: &7Common"
+    key:
+      material: TRIPWIRE_HOOK
+      name: "&7&lKlucz Common"
+      lore:
+        - "&8&m------------------"
+        - "&7Uzyj tego klucza na"
+        - "&7skrzyni &7Common&7!"
+        - "&8&m------------------"
+    # Format: MATERIAŁ;DATA;ILOŚĆ;NAZWA;ENCHANTY;SZANSA
+    rewards:
+      - "IRON_INGOT;0;16;&fSztabki Zelaza"
+      - "GOLD_INGOT;0;8;&6Sztabki Zlota"
+      - "COAL;0;32;&8Wegiel"
+      - "APPLE;0;5;&aJablka"
+      - "BOW;0;1;&6Slaby Luk Luk;ARROW_DAMAGE:1;100"
+
+  premium:
+    display_name: "&e&lSKRZYNIA PREMIUM"
+    gui_title: "&8Losowanie: &ePremium"
+    key:
+      material: TRIPWIRE_HOOK
+      name: "&e&lKlucz Premium"
+      lore:
+        - "&8&m------------------"
+        - "&7Uzyj tego klucza na"
+        - "&7skrzyni &ePremium&7!"
+        - "&8&m------------------"
+    rewards:
+      - "DIAMOND;0;8;&bDiamenty"
+      - "EMERALD;0;16;&aSzmaragdy"
+      - "GOLDEN_APPLE;1;2;&6Kox Jablko"
+      - "DIAMOND_SWORD;0;1;&bMiecz Krola;DAMAGE_ALL:5,FIRE_ASPECT:2"
+      - "DIAMOND_HELMET;0;1;&bHelm Wojownika;PROTECTION_ENVIRONMENTAL:4,DURABILITY:3"
+      - "BOW;0;1;&6Magiczny Luk;ARROW_DAMAGE:5,ARROW_INFINITE:2"
+
+# Zapisane lokalizacje postawionych skrzyń
+locations: {}
+
+# Oczekujące zwroty kluczy (nie ruszac!!)
+refunds: {}
