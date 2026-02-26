@@ -79,7 +79,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
 
         try {
             if (DHAPI.getHologram(holoName) != null) DHAPI.removeHologram(holoName);
-            DHAPI.createHologram(holoName, holoLoc, Arrays.asList(displayName, color("&7(Kliknij PPM, aby otworzyc)")));
+            DHAPI.createHologram(holoName, holoLoc, Arrays.asList(displayName, color("&7(Kliknij PPM, aby otworzyć)")));
         } catch (NoClassDefFoundError e) {
             Bukkit.getConsoleSender().sendMessage(color("&c[EmpeCrates] Błąd: Brak pluginu DecentHolograms!"));
         }
