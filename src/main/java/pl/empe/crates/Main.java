@@ -81,7 +81,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
             if (DHAPI.getHologram(holoName) != null) DHAPI.removeHologram(holoName);
             DHAPI.createHologram(holoName, holoLoc, Arrays.asList(displayName, color("&7(Kliknij PPM, aby otworzyc)")));
         } catch (NoClassDefFoundError e) {
-            Bukkit.getConsoleSender().sendMessage(color("&c[EmpeCrates] Blad: Brak DecentHolograms!"));
+            Bukkit.getConsoleSender().sendMessage(color("&c[EmpeCrates] Błąd: Brak pluginu DecentHolograms!"));
         }
     }
 
@@ -128,7 +128,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                 }
                 rewards.add(item);
             } catch (Exception e) {
-                getLogger().severe("Blad w formacie nagrody: " + s);
+                getLogger().severe("Błąd w formacie nagrody: " + s);
             }
         }
         return rewards;
@@ -167,7 +167,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (!sender.hasPermission("crates.admin")) {
-            sender.sendMessage(color("&cBlad: Nie posiadasz uprawnien!"));
+            sender.sendMessage(color("&cBłąd: Nie posiadasz uprawnień!"));
             return true;
         }
 
@@ -184,7 +184,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
         if (args[0].equalsIgnoreCase("reload")) {
             reloadConfig();
             loadData();
-            sender.sendMessage(color("&aPlugin zostal przeladowany!"));
+            sender.sendMessage(color("&aPlugin został przeładowany!"));
             return true;
         }
 
@@ -208,7 +208,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                 getConfig().set("locations.loc_" + loc.getBlockX() + "_" + loc.getBlockY() + "_" + loc.getBlockZ(), null);
                 saveConfig();
                 try { if (DHAPI.getHologram(getHoloName(loc)) != null) DHAPI.removeHologram(getHoloName(loc)); } catch (Exception ignored) {}
-                p.sendMessage(color("&aSkrzynia zostala pomyslnie usunieta!"));
+                p.sendMessage(color("&aSkrzynia została pomyślnie usunięta!"));
             }
             return true;
         }
@@ -229,7 +229,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                 getConfig().set(k + ".type", type);
                 saveConfig();
                 updateHologram(loc, type);
-                p.sendMessage(color("&aSkrzynia &f" + type + " &azostala ustawiona!"));
+                p.sendMessage(color("&aSkrzynia &f" + type + " &azostała ustawiona!"));
             }
             return true;
         }
@@ -272,7 +272,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
             for (String type : crates.getKeys(false)) {
                 if (item.getItemMeta().getDisplayName().equals(color(getConfig().getString("crates." + type + ".key.name")))) {
                     e.setCancelled(true);
-                    e.getPlayer().sendMessage(color("&cNie mozesz stawiac kluczy!"));
+                    e.getPlayer().sendMessage(color("&cNie możesz stawiać kluczy!"));
                     return;
                 }
             }
