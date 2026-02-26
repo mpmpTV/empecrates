@@ -242,7 +242,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                 ItemStack keys = createKey(type);
                 keys.setAmount(amount);
                 target.getInventory().addItem(keys);
-                sender.sendMessage(color("&aDano &f" + amount + "x &akluczy dla &f" + target.getName()));
+                sender.sendMessage(color("&aRozdano &f" + amount + "x &akluczy dla &f" + target.getName()));
             }
             return true;
         }
