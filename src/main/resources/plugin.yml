@@ -1,6 +1,6 @@
 name: EmpeCrates
-version: 1.7
-main: pl.empe.crates.CratesPlugin
+version: 1.8
+main: pl.empe.crates.Main
 api-version: 1.8
 commands:
   skrzynia:

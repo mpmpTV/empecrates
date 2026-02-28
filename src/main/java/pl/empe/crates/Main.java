@@ -18,8 +18,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -31,6 +33,7 @@ import java.util.*;
 public class Main extends JavaPlugin implements Listener, CommandExecutor {
 
     private final Map<Location, String> activeCrates = new HashMap<>();
+    private final Set<UUID> openingCrates = new HashSet<>();
     private final Random random = new Random();
 
     @Override
@@ -76,12 +79,19 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
         String holoName = getHoloName(loc);
         String displayName = color(getConfig().getString("crates." + type + ".display_name", "&c&lSKRZYNIA"));
         Location holoLoc = loc.clone().add(0.5, 2.5, 0.5);
-
         try {
-            if (DHAPI.getHologram(holoName) != null) DHAPI.removeHologram(holoName);
-            DHAPI.createHologram(holoName, holoLoc, Arrays.asList(displayName, color("&7(Kliknij PPM, aby otworzyć)")));
-        } catch (NoClassDefFoundError e) {
-            Bukkit.getConsoleSender().sendMessage(color("&c[EmpeCrates] Błąd: Brak pluginu DecentHolograms!"));
+            if (DHAPI.getHologram(holoName) != null) {
+                DHAPI.removeHologram(holoName);
+            }
+            DHAPI.createHologram(holoName, holoLoc, Arrays.asList(
+                    displayName,
+                    color("&7(&ePPM&7, aby otworzyć)"),
+                    color("&7(&eShift+PPM&7, aby otwarcia bez animacji)"),
+                    color("&7(&eLPM&7, aby sprawdzić zawartość)")
+            ));
+
+        } catch (Exception e) {
+            Bukkit.getConsoleSender().sendMessage(color("&c[EmpeCrates] Błąd przy tworzeniu hologramu: " + e.getMessage()));
         }
     }
 
@@ -155,7 +165,10 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                 if (p.length >= 5 && !p[4].isEmpty()) {
                     for (String ench : p[4].split(",")) {
                         String[] ep = ench.split(":");
-                        item.addUnsafeEnchantment(Enchantment.getByName(ep[0].toUpperCase()), Integer.parseInt(ep[1]));
+                        Enchantment enchantment = Enchantment.getByName(ep[0].toUpperCase());
+                        if (enchantment != null) {
+                            item.addUnsafeEnchantment(enchantment, Integer.parseInt(ep[1]));
+                        }
                     }
                 }
                 return item;
@@ -167,7 +180,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (!sender.hasPermission("crates.admin")) {
-            sender.sendMessage(color("&cBłąd: Nie posiadasz uprawnień!"));
+            sender.sendMessage(color("&6&lEmpe&e&lCrates &8» &cBłąd: Nie posiadasz uprawnień!"));
             return true;
         }
 
@@ -264,6 +277,11 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     }
 
     @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        openingCrates.remove(e.getPlayer().getUniqueId());
+    }
+
+    @EventHandler
     public void onBlockPlace(BlockPlaceEvent e) {
         ItemStack item = e.getItemInHand();
         if (item == null || !item.hasItemMeta()) return;
@@ -292,15 +310,45 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
         if (e.getAction() == Action.LEFT_CLICK_BLOCK) {
             openPreview(p, type);
         } else if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            if (openingCrates.contains(p.getUniqueId())) {
+                p.sendMessage(color("&6&lEmpe&e&lCrates &8» &cMusisz poczekać na zakończenie poprzedniego losowania!"));
+                return;
+            }
+
             ItemStack hand = p.getItemInHand();
             ItemStack requiredKey = createKey(type);
             if (hand != null && hand.hasItemMeta() && hand.getItemMeta().getDisplayName().equals(requiredKey.getItemMeta().getDisplayName())) {
                 if (hand.getAmount() > 1) hand.setAmount(hand.getAmount() - 1);
                 else p.setItemInHand(null);
-                startRoulette(p, type);
+
+                if (p.isSneaking()) {
+                    ItemStack won = getRandomReward(type);
+                    p.getInventory().addItem(won.clone());
+                    p.playSound(p.getLocation(), Sound.LEVEL_UP, 1f, 1f);
+                    Bukkit.broadcastMessage(color("&8&l> &7Gracz &f" + p.getName() + " &7wygral " + (won.hasItemMeta() && won.getItemMeta().hasDisplayName() ? won.getItemMeta().getDisplayName() : won.getType().name()) + " &7ze skrzyni " + type));
+                } else {
+                    openingCrates.add(p.getUniqueId());
+                    startRoulette(p, type);
+                }
             } else {
                 p.sendMessage(color("&cPotrzebujesz klucza: " + requiredKey.getItemMeta().getDisplayName()));
             }
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent e) {
+        Player p = (Player) e.getPlayer();
+        if (openingCrates.contains(p.getUniqueId())) {
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (openingCrates.contains(p.getUniqueId())) {
+                        p.openInventory(e.getInventory());
+                        p.sendMessage(color("&c&l[!] &cNie możesz zamknąć okna podczas losowania!"));
+                    }
+                }
+            }.runTaskLater(this, 1L);
         }
     }
 
@@ -362,22 +410,24 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
         new BukkitRunnable() {
             @Override
             public void run() {
-                if (!p.isOnline() || p.getOpenInventory().getTopInventory() == null) {
-                    if (!p.isOnline()) {
-                        List<String> refunds = getConfig().getStringList("refunds." + p.getUniqueId());
-                        refunds.add(type);
-                        getConfig().set("refunds." + p.getUniqueId(), refunds);
-                        saveConfig();
-                    }
+                if (!p.isOnline()) {
+                    List<String> refunds = getConfig().getStringList("refunds." + p.getUniqueId());
+                    refunds.add(type);
+                    getConfig().set("refunds." + p.getUniqueId(), refunds);
+                    saveConfig();
+                    openingCrates.remove(p.getUniqueId());
                     return;
                 }
+
                 for (int i = 9; i < 17; i++) inv.setItem(i, inv.getItem(i + 1));
                 inv.setItem(17, getRandomReward(type));
                 p.playSound(p.getLocation(), Sound.CLICK, 1f, 1f);
                 int nt = ticks + 1;
                 long nd = (nt > 25) ? (nt > 33 ? delay + 2 : delay + 1) : delay;
-                if (nt < 40) runAnimation(p, inv, type, nt, nd);
-                else {
+
+                if (nt < 40) {
+                    runAnimation(p, inv, type, nt, nd);
+                } else {
                     ItemStack won = inv.getItem(13);
                     p.playSound(p.getLocation(), Sound.LEVEL_UP, 1f, 1f);
                     new BukkitRunnable() {
@@ -385,8 +435,11 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                         public void run() {
                             if (p.isOnline()) {
                                 p.getInventory().addItem(won.clone());
-                                Bukkit.broadcastMessage(color("&8&l> &7Gracz &f" + p.getName() + " &7wygral " + won.getItemMeta().getDisplayName() + " &7ze skrzyni " + type));
+                                Bukkit.broadcastMessage(color("&8&l> &7Gracz &f" + p.getName() + " &7wygral " + (won.hasItemMeta() && won.getItemMeta().hasDisplayName() ? won.getItemMeta().getDisplayName() : won.getType().name()) + " &7ze skrzyni " + type));
+                                openingCrates.remove(p.getUniqueId());
                                 p.closeInventory();
+                            } else {
+                                openingCrates.remove(p.getUniqueId());
                             }
                         }
                     }.runTaskLater(Main.this, 40L);
