@@ -327,6 +327,20 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                     p.playSound(p.getLocation(), Sound.LEVEL_UP, 1f, 1f);
                     Bukkit.broadcastMessage(color("&8&l> &7Gracz &f" + p.getName() + " &7wygral " + (won.hasItemMeta() && won.getItemMeta().hasDisplayName() ? won.getItemMeta().getDisplayName() : won.getType().name()) + " &7ze skrzyni " + type));
                 } else {
+                    // bug z pelnym eq
+                    boolean hasSpace = false;
+                    for (ItemStack item : p.getInventory().getContents()) {
+                        if (item == null || item.getType() == Material.AIR) {
+                            hasSpace = true;
+                            break;
+                        }
+                    }
+
+                    if (!hasSpace) {
+                        p.sendMessage(color("&c&l[!] &cMasz pelny ekwipunek! Zrob miejsce, aby otworzyc skrzynie."));
+                        return;
+                    }
+
                     openingCrates.add(p.getUniqueId());
                     startRoulette(p, type);
                 }
