@@ -27,6 +27,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 
 import java.util.*;
 
@@ -317,35 +318,43 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
 
             ItemStack hand = p.getItemInHand();
             ItemStack requiredKey = createKey(type);
-            if (hand != null && hand.hasItemMeta() && hand.getItemMeta().getDisplayName().equals(requiredKey.getItemMeta().getDisplayName())) {
-                if (hand.getAmount() > 1) hand.setAmount(hand.getAmount() - 1);
-                else p.setItemInHand(null);
 
+            if (hand != null && hand.hasItemMeta()
+                    && hand.getItemMeta().getDisplayName().equals(requiredKey.getItemMeta().getDisplayName())) {
+                boolean hasSpace = false;
+                for (ItemStack item : p.getInventory().getContents()) {
+                    if (item == null || item.getType() == Material.AIR) {
+                        hasSpace = true;
+                        break;
+                    }
+                }
+
+                if (!hasSpace) {
+                    p.sendMessage(color("&c&l[!] &cMasz pelny ekwipunek! Zrob miejsce, aby otworzyc skrzynie."));
+                    return;
+                }
+
+                if (hand.getAmount() > 1) {
+                    hand.setAmount(hand.getAmount() - 1);
+                } else {
+                    p.setItemInHand(null);
+                }
                 if (p.isSneaking()) {
                     ItemStack won = getRandomReward(type);
                     p.getInventory().addItem(won.clone());
                     p.playSound(p.getLocation(), Sound.LEVEL_UP, 1f, 1f);
-                    Bukkit.broadcastMessage(color("&8&l> &7Gracz &f" + p.getName() + " &7wygral " + (won.hasItemMeta() && won.getItemMeta().hasDisplayName() ? won.getItemMeta().getDisplayName() : won.getType().name()) + " &7ze skrzyni " + type));
-                } else {
-                    // bug z pelnym eq
-                    boolean hasSpace = false;
-                    for (ItemStack item : p.getInventory().getContents()) {
-                        if (item == null || item.getType() == Material.AIR) {
-                            hasSpace = true;
-                            break;
-                        }
-                    }
-
-                    if (!hasSpace) {
-                        p.sendMessage(color("&c&l[!] &cMasz pelny ekwipunek! Zrob miejsce, aby otworzyc skrzynie."));
-                        return;
-                    }
-
-                    openingCrates.add(p.getUniqueId());
-                    startRoulette(p, type);
+                    Bukkit.broadcastMessage(color("&8&l> &7Gracz &f" + p.getName() + " &7wygral " +
+                            (won.hasItemMeta() && won.getItemMeta().hasDisplayName()
+                                    ? won.getItemMeta().getDisplayName()
+                                    : won.getType().name())
+                            + " &7ze skrzyni " + type));
+                    return;
                 }
+                openingCrates.add(p.getUniqueId());
+                startRoulette(p, type);
+
             } else {
-                p.sendMessage(color("&cPotrzebujesz klucza: " + requiredKey.getItemMeta().getDisplayName()));
+                p.sendMessage(color("&c&l[!] &cPotrzebujesz klucza: " + requiredKey.getItemMeta().getDisplayName()));
             }
         }
     }
@@ -403,7 +412,13 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
         String title = e.getView().getTitle();
         if (title.contains("Losowanie") || title.contains("Podglad") || title.contains("SKRZYNIA")) e.setCancelled(true);
     }
-
+    @EventHandler
+    public void onPickup(PlayerPickupItemEvent e) {
+        Player p = e.getPlayer();
+        if (openingCrates.contains(p.getUniqueId())) {
+            e.setCancelled(true);
+        }
+    }
     private void startRoulette(Player p, String type) {
         Inventory inv = Bukkit.createInventory(null, 27, color(getConfig().getString("crates." + type + ".gui_title", "&8Losowanie...")));
         ItemStack border = new ItemStack(Material.valueOf("STAINED_GLASS_PANE"), 1, (short) 15);
