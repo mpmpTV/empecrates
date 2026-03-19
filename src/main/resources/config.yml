@@ -14,13 +14,13 @@ crates:
         - "&7Uzyj tego klucza na"
         - "&7skrzyni &7Common&7!"
         - "&8&m------------------"
-    # Format: MATERIAŁ;DATA;ILOŚĆ;NAZWA;ENCHANTY;SZANSA
+    #MATERIAL;DATA;ILOŚĆ;NAZWA;ENCHANTY;SZANSA;LORE1|LORE2|LORE3
     rewards:
       - "IRON_INGOT;0;16;&fSztabki Zelaza"
       - "GOLD_INGOT;0;8;&6Sztabki Zlota"
       - "COAL;0;32;&8Wegiel"
       - "APPLE;0;5;&aJablka"
-      - "BOW;0;1;&6Slaby Luk Luk;ARROW_DAMAGE:1;100"
+      - "BOW;0;1;&6Slaby Luk Luk;ARROW_DAMAGE:1;100;&7Slaby ale dziala|&8Stary i zardzewialy"
 
   premium:
     display_name: "&e&lSKRZYNIA PREMIUM"

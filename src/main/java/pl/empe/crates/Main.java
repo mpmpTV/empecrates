@@ -119,25 +119,36 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     private List<ItemStack> getRewards(String crateType) {
         List<ItemStack> rewards = new ArrayList<>();
         List<String> list = getConfig().getStringList("crates." + crateType + ".rewards");
+
         for (String s : list) {
             try {
                 String[] p = s.split(";");
                 ItemStack item = new ItemStack(Material.valueOf(p[0]), Integer.parseInt(p[2]), (short) Integer.parseInt(p[1]));
                 ItemMeta m = item.getItemMeta();
                 m.setDisplayName(color(p[3]));
-                item.setItemMeta(m);
-
                 if (p.length >= 5 && !p[4].isEmpty()) {
                     String[] enchants = p[4].split(",");
                     for (String enchData : enchants) {
                         String[] enchParts = enchData.split(":");
                         Enchantment enchantment = Enchantment.getByName(enchParts[0].toUpperCase());
                         if (enchantment != null) {
-                            item.addUnsafeEnchantment(enchantment, Integer.parseInt(enchParts[1]));
+                            m.addEnchant(enchantment, Integer.parseInt(enchParts[1]), true);
                         }
                     }
                 }
+
+                // lore
+                if (p.length >= 7 && !p[6].isEmpty()) {
+                    List<String> lore = new ArrayList<>();
+                    for (String line : p[6].split("\\|")) {
+                        lore.add(color(line));
+                    }
+                    m.setLore(lore);
+                }
+
+                item.setItemMeta(m);
                 rewards.add(item);
+
             } catch (Exception e) {
                 getLogger().severe("Błąd w formacie nagrody: " + s);
             }
@@ -145,39 +156,54 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
         return rewards;
     }
 
+
     private ItemStack getRandomReward(String crateType) {
         List<String> list = getConfig().getStringList("crates." + crateType + ".rewards");
+
         double totalWeight = 0;
         for (String s : list) {
             String[] p = s.split(";");
             totalWeight += (p.length >= 6) ? Double.parseDouble(p[5]) : 1.0;
         }
+
         double r = random.nextDouble() * totalWeight;
         double countWeight = 0;
+
         for (String s : list) {
             String[] p = s.split(";");
             double weight = (p.length >= 6) ? Double.parseDouble(p[5]) : 1.0;
             countWeight += weight;
+
             if (countWeight >= r) {
                 ItemStack item = new ItemStack(Material.valueOf(p[0]), Integer.parseInt(p[2]), (short) Integer.parseInt(p[1]));
                 ItemMeta m = item.getItemMeta();
                 m.setDisplayName(color(p[3]));
-                item.setItemMeta(m);
                 if (p.length >= 5 && !p[4].isEmpty()) {
                     for (String ench : p[4].split(",")) {
                         String[] ep = ench.split(":");
                         Enchantment enchantment = Enchantment.getByName(ep[0].toUpperCase());
                         if (enchantment != null) {
-                            item.addUnsafeEnchantment(enchantment, Integer.parseInt(ep[1]));
+                            m.addEnchant(enchantment, Integer.parseInt(ep[1]), true);
                         }
                     }
                 }
+
+                // lore
+                if (p.length >= 7 && !p[6].isEmpty()) {
+                    List<String> lore = new ArrayList<>();
+                    for (String line : p[6].split("\\|")) {
+                        lore.add(color(line));
+                    }
+                    m.setLore(lore);
+                }
+
+                item.setItemMeta(m);
                 return item;
             }
         }
+
         return getRewards(crateType).get(0);
     }
-
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (!sender.hasPermission("crates.admin")) {
