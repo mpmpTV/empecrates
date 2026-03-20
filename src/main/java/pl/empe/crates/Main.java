@@ -14,6 +14,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import java.io.File;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -39,12 +40,28 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
+        try {
+            File file = new File(getDataFolder(), "config.yml");
+            if (!file.exists()) {
+                saveResource("config.yml", false);
+            }
+
+            String content = new String(
+                    java.nio.file.Files.readAllBytes(file.toPath()),
+                    java.nio.charset.StandardCharsets.UTF_8
+            );
+
+            getConfig().loadFromString(content);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         loadData();
 
         if (getCommand("skrzynia") != null) {
             getCommand("skrzynia").setExecutor(this);
         }
+
         Bukkit.getPluginManager().registerEvents(this, this);
 
         Bukkit.getConsoleSender().sendMessage("");
@@ -55,7 +72,6 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
         Bukkit.getConsoleSender().sendMessage(color(" &6&m---------------------------------------"));
         Bukkit.getConsoleSender().sendMessage("");
     }
-
     private void loadData() {
         activeCrates.clear();
         ConfigurationSection locSection = getConfig().getConfigurationSection("locations");
@@ -222,7 +238,17 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
         }
 
         if (args[0].equalsIgnoreCase("reload")) {
-            reloadConfig();
+            try {
+                File file = new File(getDataFolder(), "config.yml");
+                String content = new String(
+                        java.nio.file.Files.readAllBytes(file.toPath()),
+                        java.nio.charset.StandardCharsets.UTF_8
+                );
+                getConfig().loadFromString(content);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             loadData();
             sender.sendMessage(color("&aPlugin został przeładowany!"));
             return true;
@@ -356,7 +382,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                 }
 
                 if (!hasSpace) {
-                    p.sendMessage(color("&c&l[!] &cMasz pelny ekwipunek! Zrob miejsce, aby otworzyc skrzynie."));
+                    p.sendMessage(color("&c&l[!] &cMasz pełny ekwipunek! Zrób miejsce, aby otworzyć skrzynie."));
                     return;
                 }
 
@@ -369,7 +395,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                     ItemStack won = getRandomReward(type);
                     p.getInventory().addItem(won.clone());
                     p.playSound(p.getLocation(), Sound.LEVEL_UP, 1f, 1f);
-                    Bukkit.broadcastMessage(color("&8&l> &7Gracz &f" + p.getName() + " &7wygral " +
+                    Bukkit.broadcastMessage(color("&8&l> &7Gracz &f" + p.getName() + " &7wygrał " +
                             (won.hasItemMeta() && won.getItemMeta().hasDisplayName()
                                     ? won.getItemMeta().getDisplayName()
                                     : won.getType().name())
@@ -418,6 +444,11 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                 double weight = (p_.length >= 6) ? Double.parseDouble(p_[5]) : 1.0;
                 double percent = (weight / total) * 100.0;
                 List<String> lore = new ArrayList<>();
+                if (p_.length >= 7 && !p_[6].isEmpty()) {
+                    for (String line : p_[6].split("\\|")) {
+                        lore.add(color(line));
+                    }
+                }
                 lore.add(color("&7Szansa: &e" + String.format("%.2f", percent) + "%"));
                 m.setLore(lore);
                 if (p_.length >= 5 && !p_[4].isEmpty()) {
@@ -490,7 +521,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                         public void run() {
                             if (p.isOnline()) {
                                 p.getInventory().addItem(won.clone());
-                                Bukkit.broadcastMessage(color("&8&l> &7Gracz &f" + p.getName() + " &7wygral " + (won.hasItemMeta() && won.getItemMeta().hasDisplayName() ? won.getItemMeta().getDisplayName() : won.getType().name()) + " &7ze skrzyni " + type));
+                                Bukkit.broadcastMessage(color("&8&l> &7Gracz &f" + p.getName() + " &7wygrał " + (won.hasItemMeta() && won.getItemMeta().hasDisplayName() ? won.getItemMeta().getDisplayName() : won.getType().name()) + " &7ze skrzyni " + type));
                                 openingCrates.remove(p.getUniqueId());
                                 p.closeInventory();
                             } else {
